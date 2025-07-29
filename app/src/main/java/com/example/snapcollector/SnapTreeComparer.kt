@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties

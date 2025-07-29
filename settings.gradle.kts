@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "snaper"
+rootProject.name = "SnapCollector"
 include(":app")

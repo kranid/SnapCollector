@@ -1,5 +1,5 @@
 
-package com.example.snaper
+package com.example.snapcollector
 
 import android.util.Log
 import android.graphics.Bitmap

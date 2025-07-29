@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 import android.content.res.Resources.NotFoundException
 import android.util.Log
@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 class SnapHubClient {
-    private val TAG: String = "snapper"
+    private val TAG: String = "snapcollector"
     private val rootUrl = "http://212.34.131.52:8080/snaphub"
     private val client = HttpClient {
         install(ContentNegotiation) {

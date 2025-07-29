@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 const val promt = """
 Я предоставлю тебе скриншот экрана и его семантическое описание в json .

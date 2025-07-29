@@ -10,7 +10,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.snaper"
+        applicationId = "com.example.snapcollector"
         minSdk = 30
         targetSdk = 34
         versionCode = 1

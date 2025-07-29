@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 import android.content.Context
 import android.content.Context.WINDOW_SERVICE

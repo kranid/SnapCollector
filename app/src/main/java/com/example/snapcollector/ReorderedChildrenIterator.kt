@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.example.snaper
+package com.example.snapcollector
 
 import android.graphics.Rect
 import android.util.Log
@@ -203,7 +203,7 @@ class ReorderedChildrenIterator private constructor(
             try {
                 parent.childCount
             } catch (e: Exception) {
-                Log.i("snapper", e.message ?: "unknown error")
+                Log.i("snapcollector", e.message ?: "unknown error")
                 0
             }
         for (i in 0 until count) {

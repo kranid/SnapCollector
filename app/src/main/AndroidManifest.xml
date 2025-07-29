@@ -12,11 +12,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Snaper">
+        android:theme="@style/Theme.SnapCollector">
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.snapcollector.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Snaper">
+            android:theme="@style/Theme.SnapCollector">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name="com.example.snaper.MyAccessibilityService"
+            android:name="com.example.snapcollector.MyAccessibilityService"
             android:directBootAware="true"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">

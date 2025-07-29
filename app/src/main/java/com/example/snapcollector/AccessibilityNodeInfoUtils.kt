@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 import android.graphics.Rect
 import android.os.Build
@@ -14,7 +14,7 @@ import android.util.Log
 
 object AccessibilityNodeInfoUtils {
 
-    private const val TAG = "Snapper.AccessibilityNodeInfoUtils"
+    private const val TAG = "SnapCollector.AccessibilityNodeInfoUtils"
 
 
     fun shouldFocusNode(node: AccessibilityNodeInfoCompat?): Boolean {

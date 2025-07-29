@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.example.snaper
+package com.example.snapcollector
 
 import android.app.UiModeManager
 import android.content.Context

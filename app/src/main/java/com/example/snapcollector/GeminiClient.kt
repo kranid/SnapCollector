@@ -1,4 +1,4 @@
-package com.example.snaper
+package com.example.snapcollector
 
 import android.graphics.Bitmap
 import android.util.Base64

@@ -1,12 +1,12 @@
-package com.example.snaper
+package com.example.snapcollector
 
-import com.example.snaper.takeScreenshotAsBitmap
+import com.example.snapcollector.takeScreenshotAsBitmap
 import android.graphics.Bitmap
 import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
-import com.example.snaper.promt
+import com.example.snapcollector.promt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -45,7 +45,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        Log.i(tag, "The snapper has successfully started")
+        Log.i(tag, "The snapcollector has successfully started")
         overlayManager = OverlayManager(this, gemini, snapHubClient)
         overlayManager.showOverlay { makeAndSaveSnapshot() }
     }
