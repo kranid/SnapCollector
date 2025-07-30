@@ -1,12 +1,12 @@
 
 package com.example.snapcollector
 
-import android.util.Log
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import android.content.Context
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +26,7 @@ data class OverlayState(
 )
 
 class OverlayViewModel(
-    private val geminiClient: GeminiClient,
+    private val context: Context,
     private val snapHubClient: SnapHubClient
 ) : ViewModel() {
 
@@ -53,47 +53,43 @@ class OverlayViewModel(
         makeSnapshot: () -> List<SnapNode>?,
         captureScreenshot: suspend () -> Bitmap?,
         screenInfo: ScreenInfo?,
-        promt: String
     ) {
         Log.d("OverlayViewModel", "runAccessibilityCheck called")
         viewModelScope.launch {
+            startLoading()
+            // Hide FAB before capturing screenshot
+            _uiState.update { it.copy(isFabVisible = false) }
+
             val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
+            Log.d("snapper", "snapTree is null: ${snapTree == null}")
             val screenshotBitmap = withContext(Dispatchers.IO) { captureScreenshot() }
+            Log.d("snapper", "screenshotBitmap is null: ${screenshotBitmap == null}")
+
+            // Show FAB after capturing screenshot
+            _uiState.update { it.copy(isFabVisible = true) }
 
             if (snapTree == null || screenshotBitmap == null || screenInfo == null) {
                 showError("Failed to get screen data.")
                 return@launch
             }
 
-            startLoading() // Move startLoading here
-
             try {
-                snapHubClient.saveSnap(snapTree, screenInfo)
-                val json = Json.encodeToJsonElement(snapTree).toString()
+                val sessionPath = FileUtils.saveSession(context, screenshotBitmap, snapTree, screenInfo.PackageName)
+                Log.d("snapper", "sessionPath is null: ${sessionPath == null}")
 
-                val result = geminiClient.checkSnapshot(screenshotBitmap, "$promt $json")
-                result.onSuccess { report ->
-                    if (report.isEmpty()) {
-                        showError("No accessibility issues found!")
-                        hideReport() // Go back to the FAB
-                    } else {
-                        snapHubClient.saveReport(report, screenInfo)
-                        _uiState.update {
-                            it.copy(
-                                issues = report,
-                                currentIndex = 0,
-                                isVisible = true,
-                                isLoading = false,
-                                isFabVisible = false,
-                                errorMessage = null
-                            )
-                        }
-                    }
-                }.onFailure { e ->
-                    showError("An error occurred: ${e.message}")
-                }
+                if (sessionPath == null) {
+                    showError("Failed to save files.")
+                     return@launch
+    }
+
+                val response = snapHubClient.saveSnap(snapTree, screenInfo)
+                showError("Snapshot and screenshot saved and sent successfully!")
+
             } catch (e: Exception) {
-                showError("A processing error occurred: ${e.message}")
+                showError("An error occurred: ${e.message}")
+            } finally {
+                stopLoading()
+                hideReport()
             }
         }
     }

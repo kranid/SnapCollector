@@ -1,20 +1,15 @@
 package com.example.snapcollector
 
-import com.example.snapcollector.takeScreenshotAsBitmap
-import android.graphics.Bitmap
 import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.accessibilityservice.AccessibilityServiceInfo
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
-import com.example.snapcollector.promt
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 data class ScreenInfo(var Name: String, val PackageName: String)
 
 class MyAccessibilityService : AccessibilityService() {
-    private val ApiKey = "AIzaSyD8GLiiTXHdgdahZE4frRhQhMcLD82KWnM"
-    private val gemini = GeminiClient(ApiKey)
+    
 
     private val tag = "snapper"
     private val snapHubClient: SnapHubClient = SnapHubClient()
@@ -46,8 +41,10 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(tag, "The snapcollector has successfully started")
-        overlayManager = OverlayManager(this, gemini, snapHubClient)
+        overlayManager = OverlayManager(this, snapHubClient)
         overlayManager.showOverlay { makeAndSaveSnapshot() }
+
+        this.serviceInfo = serviceInfo
     }
 
     override fun onInterrupt() {
@@ -59,18 +56,21 @@ class MyAccessibilityService : AccessibilityService() {
         overlayManager.viewModel.runAccessibilityCheck(
             makeSnapshot = ::makeSnapshot,
             captureScreenshot = ::takeScreenshotAsBitmap,
-            screenInfo = screenInfo,
-            promt = promt
+            screenInfo = screenInfo
         )
     }
 
     private fun makeSnapshot(): List<SnapNode>? {
-        val root = this.rootInActiveWindow ?: return null
+        val root = this.rootInActiveWindow
+        if (root == null) {
+            Log.e(tag, "rootInActiveWindow is null, cannot create snapshot.")
+            return null
+        }
         val controller = SnapController()
         return try {
             controller.createSnapTree(AccessibilityNodeInfoCompat.wrap(root))
         } catch (e: Exception) {
-            Log.i(tag, e.stackTraceToString())
+            Log.e(tag, "Error creating snapshot tree: ${e.message}")
             null
         }
     }

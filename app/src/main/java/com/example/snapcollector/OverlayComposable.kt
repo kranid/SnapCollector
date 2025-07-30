@@ -84,21 +84,7 @@ fun OverlayContent(
     }
 }
 
-@Composable
-fun FloatingActionButton(onClick: () -> Unit) {
-    Box(modifier = Modifier) {
-        Button(
-            onClick = onClick,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
-                .alpha(0.5f)
-                
-        ) {
-            Text("Make Snapshot")
-        }
-    }
-}
+
 
 @Composable
 fun ReportOverlay(

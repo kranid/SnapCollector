@@ -30,7 +30,7 @@ suspend fun AccessibilityService.takeScreenshotAsBitmap(): Bitmap? = suspendCanc
                 }
 
                 if (bitmap == null) {
-                    Log.e("ScreenshotUtils", "Не удалось создать Bitmap из скриншота")
+                    Log.e("snapper", "Не удалось создать Bitmap из скриншота")
                     cont.resume(null)
                     return
                 }
@@ -39,7 +39,7 @@ suspend fun AccessibilityService.takeScreenshotAsBitmap(): Bitmap? = suspendCanc
             }
 
             override fun onFailure(errorCode: Int) {
-                Log.e("ScreenshotUtils", "Ошибка скриншота: $errorCode")
+                Log.e("snapper", "Ошибка скриншота: $errorCode")
                 cont.resume(null)
             }
         }

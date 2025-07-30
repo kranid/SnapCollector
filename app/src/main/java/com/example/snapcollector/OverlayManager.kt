@@ -6,6 +6,8 @@ import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
@@ -26,23 +28,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class OverlayViewModelFactory(private val geminiClient: GeminiClient, private val snapHubClient: SnapHubClient) : ViewModelProvider.Factory {
+class OverlayViewModelFactory(private val context: Context, private val snapHubClient: SnapHubClient) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(OverlayViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return OverlayViewModel(geminiClient, snapHubClient) as T
+            return OverlayViewModel(context, snapHubClient) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
-class OverlayManager(private val context: Context, geminiClient: GeminiClient, snapHubClient: SnapHubClient) : ViewModelStoreOwner, SavedStateRegistryOwner, LifecycleOwner {
+class OverlayManager(private val context: Context, snapHubClient: SnapHubClient) : ViewModelStoreOwner, SavedStateRegistryOwner, LifecycleOwner {
     private val windowManager: WindowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
-    private var fabOverlayView: ComposeView? = null
+    
     private var mainOverlayView: ComposeView? = null
+    private var fabOverlayView: ComposeView? = null
 
     val viewModel: OverlayViewModel by lazy {
-        ViewModelProvider(this, OverlayViewModelFactory(geminiClient, snapHubClient))[OverlayViewModel::class.java]
+        ViewModelProvider(this, OverlayViewModelFactory(context, snapHubClient))[OverlayViewModel::class.java]
     }
 
     // ViewModelStoreOwner implementation
@@ -79,7 +82,12 @@ class OverlayManager(private val context: Context, geminiClient: GeminiClient, s
             setViewTreeViewModelStoreOwner(this@OverlayManager)
             setViewTreeSavedStateRegistryOwner(this@OverlayManager)
             setContent {
-                FloatingActionButton(onClick = makeSnapshot)
+                val state by viewModel.uiState.collectAsState()
+                if (state.isFabVisible) {
+                    FloatingActionButton(onClick = makeSnapshot) {
+                        Text("Make Snapshot")
+                    }
+                }
             }
         }
 
@@ -108,12 +116,14 @@ class OverlayManager(private val context: Context, geminiClient: GeminiClient, s
                 if (state.isLoading || state.isVisible) {
                     OverlayContent(
                         state = state,
-                        onMakeSnapshot = makeSnapshot, // This won't be used here, but kept for signature
+                        onMakeSnapshot = makeSnapshot,
                         onPrev = { viewModel.prevIssue() },
                         onNext = { viewModel.nextIssue() },
                         onClose = { viewModel.hideReport() },
                         onClearError = { viewModel.clearError() }
                     )
+                } else {
+                    mainOverlayView?.visibility = View.GONE
                 }
             }
         }
@@ -134,14 +144,9 @@ class OverlayManager(private val context: Context, geminiClient: GeminiClient, s
         // Observe ViewModel state to control visibility
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.uiState.collect { state ->
-                if (state.isFabVisible) {
-                    fabOverlayView?.visibility = View.VISIBLE
-                    mainOverlayView?.visibility = View.GONE
-                } else if (state.isLoading || state.isVisible) {
-                    fabOverlayView?.visibility = View.GONE
+                if (state.isLoading || state.isVisible) {
                     mainOverlayView?.visibility = View.VISIBLE
                 } else {
-                    fabOverlayView?.visibility = View.GONE
                     mainOverlayView?.visibility = View.GONE
                 }
             }
