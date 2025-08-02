@@ -73,4 +73,22 @@ class SnapHubClient {
         return resp.body<List<SnapNode>>()
     }
 
+    // Заглушка для сохранения данных
+    suspend fun saveData(
+        screenshot: ByteArray,
+        originalSnapNodes: List<SnapNode>,
+        editedSnapNodes: List<SnapNode>,
+        technicalChanges: List<SnapChange>,
+        humanReadableIssues: List<SnapIssue>
+    ) {
+        // Здесь будет логика отправки данных на сервер
+        // Пока это заглушка, просто выведем информацию в лог
+        Log.d(TAG, "Saving data:")
+        Log.d(TAG, "Screenshot size: ${screenshot.size} bytes")
+        Log.d(TAG, "Original SnapNodes count: ${originalSnapNodes.size}")
+        Log.d(TAG, "Edited SnapNodes count: ${editedSnapNodes.size}")
+        Log.d(TAG, "Technical Changes count: ${technicalChanges.size}")
+        Log.d(TAG, "Human Readable Issues count: ${humanReadableIssues.size}")
+    }
+
 }

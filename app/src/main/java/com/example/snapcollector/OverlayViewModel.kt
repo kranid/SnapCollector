@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -22,6 +23,8 @@ data class OverlayState(
     val isVisible: Boolean = false,
     val isLoading: Boolean = false,
     val isFabVisible: Boolean = true,
+    val isSnapshotReviewVisible: Boolean = false,
+    val isNodeEditScreenVisible: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -51,46 +54,52 @@ class OverlayViewModel(
 
     fun runAccessibilityCheck(
         makeSnapshot: () -> List<SnapNode>?,
-        captureScreenshot: suspend () -> Bitmap?,
-        screenInfo: ScreenInfo?,
+        snapshotReviewViewModel: SnapshotReviewViewModel,
+        takeScreenshot: suspend () -> Bitmap? // Add this parameter
     ) {
         Log.d("OverlayViewModel", "runAccessibilityCheck called")
         viewModelScope.launch {
             startLoading()
-            // Hide FAB before capturing screenshot
-            _uiState.update { it.copy(isFabVisible = false) }
 
             val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
-            Log.d("snapper", "snapTree is null: ${snapTree == null}")
-            val screenshotBitmap = withContext(Dispatchers.IO) { captureScreenshot() }
-            Log.d("snapper", "screenshotBitmap is null: ${screenshotBitmap == null}")
+            val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
 
-            // Show FAB after capturing screenshot
-            _uiState.update { it.copy(isFabVisible = true) }
-
-            if (snapTree == null || screenshotBitmap == null || screenInfo == null) {
+            if (snapTree == null) {
                 showError("Failed to get screen data.")
                 return@launch
             }
 
-            try {
-                val sessionPath = FileUtils.saveSession(context, screenshotBitmap, snapTree, screenInfo.PackageName)
-                Log.d("snapper", "sessionPath is null: ${sessionPath == null}")
+            val screenshotByteArray = screenshotBitmap?.let {
+                val outputStream = ByteArrayOutputStream()
+                it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                outputStream.toByteArray()
+            }
 
-                if (sessionPath == null) {
-                    showError("Failed to save files.")
-                     return@launch
+            if (screenshotByteArray == null) {
+                showError("Failed to capture screenshot.")
+                return@launch
+            }
+
+            snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray)
+            _uiState.update { it.copy(isSnapshotReviewVisible = true, isFabVisible = false) }
+            stopLoading()
+        }
     }
 
-                val response = snapHubClient.saveSnap(snapTree, screenInfo)
-                showError("Snapshot and screenshot saved and sent successfully!")
+    fun showNodeEditScreen() {
+        _uiState.update { it.copy(isNodeEditScreenVisible = true, isSnapshotReviewVisible = false) }
+    }
 
-            } catch (e: Exception) {
-                showError("An error occurred: ${e.message}")
-            } finally {
-                stopLoading()
-                hideReport()
-            }
+    fun hideNodeEditScreen() {
+        _uiState.update { it.copy(isNodeEditScreenVisible = false, isSnapshotReviewVisible = true) }
+    }
+
+    fun hideSnapshotReview() {
+        _uiState.update {
+            it.copy(
+                isSnapshotReviewVisible = false,
+                isFabVisible = true
+            )
         }
     }
 

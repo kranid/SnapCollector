@@ -55,8 +55,8 @@ class MyAccessibilityService : AccessibilityService() {
         Log.d(tag, "makeAndSaveSnapshot called")
         overlayManager.viewModel.runAccessibilityCheck(
             makeSnapshot = ::makeSnapshot,
-            captureScreenshot = ::takeScreenshotAsBitmap,
-            screenInfo = screenInfo
+            snapshotReviewViewModel = overlayManager.snapshotReviewViewModel,
+            takeScreenshot = ::takeScreenshotAsBitmap
         )
     }
 

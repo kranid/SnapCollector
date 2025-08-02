@@ -34,6 +34,24 @@ data class SnapRange(
     val current: Float
 )
 
+enum class ChangeType {
+    PROPERTY_CHANGE,
+    ADD,
+    REMOVE,
+    REORDER
+}
+
+@Serializable
+data class SnapChange(
+    val type: ChangeType,
+    val path: String,
+    val oldValue: String? = null,
+    val newValue: String? = null,
+    val nodeRepresentation: SnapNode? = null,
+    val oldIndex: Int? = null,
+    val newIndex: Int? = null
+)
+
 @Serializable
 data class SnapNode(
     val text: String = "",
