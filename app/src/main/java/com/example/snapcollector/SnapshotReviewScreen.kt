@@ -55,10 +55,16 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                             .fillMaxWidth()
                             .padding(8.dp)
                             .semantics {
-                                customActions = listOf(CustomAccessibilityAction("Редактировать") {
-                                    viewModel.onEditNode(node)
-                                    true
-                                })
+                                customActions = listOf(
+                                    CustomAccessibilityAction("Редактировать") {
+                                        viewModel.onEditNode(node)
+                                        true
+                                    },
+                                    CustomAccessibilityAction("Удалить") {
+                                        viewModel.removeNode(node)
+                                        true
+                                    }
+                                )
                             }
                     )
                 } else {
@@ -76,10 +82,16 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                 if (node.role == Role.CHECK_BOX || node.role == Role.SWITCH) {
                                     this.toggleableState = if (node.checked) ToggleableState.On else ToggleableState.Off
                                 }
-                                this.customActions = listOf(CustomAccessibilityAction("Редактировать") {
-                                    viewModel.onEditNode(node)
-                                    true
-                                })
+                                this.customActions = listOf(
+                                    CustomAccessibilityAction("Редактировать") {
+                                        viewModel.onEditNode(node)
+                                        true
+                                    },
+                                    CustomAccessibilityAction("Удалить") {
+                                        viewModel.removeNode(node)
+                                        true
+                                    }
+                                )
                                 // Set progress bar range info if available
                                 if (node.role == Role.PROGRESS_BAR || node.role == Role.SEEK_CONTROL) {
                                     node.range?.let {

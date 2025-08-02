@@ -43,6 +43,16 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         }
     }
 
+    fun removeNode(node: SnapNode) {
+        val currentNodes = _snapNodes.value.toMutableList()
+        val index = currentNodes.indexOf(node)
+        if (index != -1) {
+            currentNodes.removeAt(index)
+            _snapNodes.value = currentNodes
+            _changes.value = _changes.value + SnapChange(ChangeType.REMOVE, "node", null, null, node, index, null)
+        }
+    }
+
     fun addChanges(newChanges: List<SnapChange>) {
         _changes.value = _changes.value + newChanges
     }
