@@ -64,7 +64,21 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                         viewModel.removeNode(node)
                                         true
                                     }
-                                )
+                                ).toMutableList().apply {
+                                    val currentIndex = snapNodes.indexOf(node)
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Переместить вверх") {
+                                            viewModel.moveNodeUp(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Переместить вниз") {
+                                            viewModel.moveNodeDown(node)
+                                            true
+                                        })
+                                    }
+                                }
                             }
                     )
                 } else {
@@ -91,12 +105,19 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                         viewModel.removeNode(node)
                                         true
                                     }
-                                )
-                                // Set progress bar range info if available
-                                if (node.role == Role.PROGRESS_BAR || node.role == Role.SEEK_CONTROL) {
-                                    node.range?.let {
-                                        this.progressBarRangeInfo =
-                                            ProgressBarRangeInfo(it.current, it.min.toFloat()..it.max.toFloat())
+                                ).toMutableList().apply {
+                                    val currentIndex = snapNodes.indexOf(node)
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Переместить вверх") {
+                                            viewModel.moveNodeUp(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Переместить вниз") {
+                                            viewModel.moveNodeDown(node)
+                                            true
+                                        })
                                     }
                                 }
                             }

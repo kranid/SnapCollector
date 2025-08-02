@@ -53,6 +53,32 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         }
     }
 
+    fun moveNodeUp(node: SnapNode) {
+        val currentNodes = _snapNodes.value.toMutableList()
+        val index = currentNodes.indexOf(node)
+        if (index > 0) {
+            val oldIndex = index
+            val newIndex = index - 1
+            currentNodes.removeAt(index)
+            currentNodes.add(newIndex, node)
+            _snapNodes.value = currentNodes
+            _changes.value = _changes.value + SnapChange(ChangeType.REORDER, "node", null, null, node, oldIndex, newIndex)
+        }
+    }
+
+    fun moveNodeDown(node: SnapNode) {
+        val currentNodes = _snapNodes.value.toMutableList()
+        val index = currentNodes.indexOf(node)
+        if (index < currentNodes.size - 1) {
+            val oldIndex = index
+            val newIndex = index + 1
+            currentNodes.removeAt(index)
+            currentNodes.add(newIndex, node)
+            _snapNodes.value = currentNodes
+            _changes.value = _changes.value + SnapChange(ChangeType.REORDER, "node", null, null, node, oldIndex, newIndex)
+        }
+    }
+
     fun addChanges(newChanges: List<SnapChange>) {
         _changes.value = _changes.value + newChanges
     }
