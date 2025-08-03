@@ -1,4 +1,3 @@
-
 package com.example.snapcollector
 
 import android.graphics.Bitmap
@@ -25,19 +24,24 @@ data class OverlayState(
     val isFabVisible: Boolean = true,
     val isSnapshotReviewVisible: Boolean = false,
     val isNodeEditScreenVisible: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null,
+    val isUniversalMessageVisible: Boolean = false,
+    val universalMessageTitle: String? = null,
+    val universalMessageText: String? = null
 )
 
 class OverlayViewModel(
     private val context: Context,
-    private val snapHubClient: SnapHubClient
+    private val snapHubClient: SnapHubClient,
+    private val getScreenInfo: () -> ScreenInfo
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OverlayState())
     val uiState: StateFlow<OverlayState> = _uiState.asStateFlow()
 
     fun startLoading() {
-        _uiState.update { it.copy(isLoading = true, isFabVisible = false, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true, isFabVisible = false, errorMessage = null, successMessage = null, isUniversalMessageVisible = false, universalMessageTitle = null, universalMessageText = null) }
     }
 
     fun stopLoading() {
@@ -45,11 +49,17 @@ class OverlayViewModel(
     }
 
     fun showError(message: String) {
-        _uiState.update { it.copy(isLoading = false, isFabVisible = true, errorMessage = message) }
+        Log.e("OverlayViewModel", "Showing error: $message")
+        _uiState.update { it.copy(isLoading = false, isFabVisible = true, errorMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Ошибка", universalMessageText = message) }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(errorMessage = null) }
+    fun showSuccess(message: String) {
+        Log.i("OverlayViewModel", "Showing success: $message")
+        _uiState.update { it.copy(isLoading = false, isFabVisible = true, successMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Успех", universalMessageText = message) }
+    }
+
+    fun hideSuccessOrError() {
+        _uiState.update { it.copy(errorMessage = null, successMessage = null, isUniversalMessageVisible = false, universalMessageTitle = null, universalMessageText = null) }
     }
 
     fun runAccessibilityCheck(
@@ -60,29 +70,32 @@ class OverlayViewModel(
         Log.d("OverlayViewModel", "runAccessibilityCheck called")
         viewModelScope.launch {
             startLoading()
+            try {
+                val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
+                val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
 
-            val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
-            val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
+                if (snapTree == null) {
+                    showError("Failed to get screen data.")
+                    return@launch
+                }
 
-            if (snapTree == null) {
-                showError("Failed to get screen data.")
-                return@launch
+                val screenshotByteArray = screenshotBitmap?.let {
+                    val outputStream = ByteArrayOutputStream()
+                    it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                    outputStream.toByteArray()
+                }
+
+                if (screenshotByteArray == null) {
+                    showError("Failed to capture screenshot.")
+                    return@launch
+                }
+
+                snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray)
+                _uiState.update { it.copy(isSnapshotReviewVisible = true, isFabVisible = false) }
+                stopLoading()
+            } catch (e: Exception) {
+                showError("Ошибка при создании снимка: ${e.message}")
             }
-
-            val screenshotByteArray = screenshotBitmap?.let {
-                val outputStream = ByteArrayOutputStream()
-                it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                outputStream.toByteArray()
-            }
-
-            if (screenshotByteArray == null) {
-                showError("Failed to capture screenshot.")
-                return@launch
-            }
-
-            snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray)
-            _uiState.update { it.copy(isSnapshotReviewVisible = true, isFabVisible = false) }
-            stopLoading()
         }
     }
 
@@ -97,8 +110,7 @@ class OverlayViewModel(
     fun hideSnapshotReview() {
         _uiState.update {
             it.copy(
-                isSnapshotReviewVisible = false,
-                isFabVisible = true
+                isSnapshotReviewVisible = false
             )
         }
     }
@@ -106,8 +118,7 @@ class OverlayViewModel(
     fun hideReport() {
         _uiState.update {
             it.copy(
-                isVisible = false,
-                isFabVisible = true
+                isVisible = false
             )
         }
     }

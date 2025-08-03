@@ -1,11 +1,12 @@
 
 package com.example.snapcollector
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, private val nodeEditViewModel: NodeEditViewModel, private val snapHubClient: SnapHubClient) : ViewModel() {
+class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, private val nodeEditViewModel: NodeEditViewModel, private val snapHubClient: SnapHubClient, private val getScreenInfo: () -> ScreenInfo) : ViewModel() {
     private val _snapNodes = MutableStateFlow<List<SnapNode>>(emptyList())
     val snapNodes = _snapNodes.asStateFlow()
 
@@ -108,20 +109,36 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     }
 
     suspend fun sendReport() {
+        Log.d("SnapshotReviewViewModel", "sendReport() called")
         val screenshot = _screenshot.value
+        Log.d("SnapshotReviewViewModel", "Screenshot value: ${screenshot?.size ?: "null"}")
+
+        if (screenshot == null) {
+            Log.e("SnapshotReviewViewModel", "Screenshot is null, cannot send report.")
+            return
+        }
+
         val originalNodes = _originalSnapNodes.value
         val editedNodes = _snapNodes.value
         val technicalChanges = _changes.value
         val humanReadableIssues = generateHumanReadableIssues()
 
-        if (screenshot != null) {
+        try {
+            val currentScreenInfo = getScreenInfo()
             snapHubClient.saveData(
                 screenshot,
                 originalNodes,
                 editedNodes,
                 technicalChanges,
-                humanReadableIssues
+                humanReadableIssues,
+                currentScreenInfo.PackageName,
+                currentScreenInfo.Name
             )
+            Log.d("SnapshotReviewViewModel", "saveData successful.")
+            overlayViewModel.showSuccess("Отчет успешно отправлен!")
+            } catch (e: Exception) {
+                Log.e("SnapshotReviewViewModel", "Error in saveData: ${e.message}", e)
+                overlayViewModel.showError("Ошибка при отправке отчета: ${e.message}")
+            }
         }
     }
-}

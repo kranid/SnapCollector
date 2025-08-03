@@ -29,31 +29,32 @@ import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.OnBackPressedDispatcherOwner
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.CompositionLocalProvider
+import com.example.snapcollector.OverlayContent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class OverlayViewModelFactory(private val context: Context, private val snapHubClient: SnapHubClient) : ViewModelProvider.Factory {
+class OverlayViewModelFactory(private val context: Context, private val snapHubClient: SnapHubClient, private val getScreenInfo: () -> ScreenInfo) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(OverlayViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return OverlayViewModel(context, snapHubClient) as T
+            return OverlayViewModel(context, snapHubClient, getScreenInfo) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
-class SnapshotReviewViewModelFactory(private val overlayViewModel: OverlayViewModel, private val nodeEditViewModel: NodeEditViewModel, private val snapHubClient: SnapHubClient) : ViewModelProvider.Factory {
+class SnapshotReviewViewModelFactory(private val overlayViewModel: OverlayViewModel, private val nodeEditViewModel: NodeEditViewModel, private val snapHubClient: SnapHubClient, private val getScreenInfo: () -> ScreenInfo) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SnapshotReviewViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return SnapshotReviewViewModel(overlayViewModel, nodeEditViewModel, snapHubClient) as T
+            return SnapshotReviewViewModel(overlayViewModel, nodeEditViewModel, snapHubClient, getScreenInfo) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 
-class OverlayManager(private val context: Context, snapHubClient: SnapHubClient) : ViewModelStoreOwner, SavedStateRegistryOwner, LifecycleOwner, OnBackPressedDispatcherOwner {
+class OverlayManager(private val context: Context, snapHubClient: SnapHubClient, private val getScreenInfo: () -> ScreenInfo) : ViewModelStoreOwner, SavedStateRegistryOwner, LifecycleOwner, OnBackPressedDispatcherOwner {
     private val windowManager: WindowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
     
     private var mainOverlayView: ComposeView? = null
@@ -61,12 +62,14 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient)
     private var snapshotReviewView: ComposeView? = null
     private var nodeEditView: ComposeView? = null
 
+    private var universalMessageView: ComposeView? = null
+
     val viewModel: OverlayViewModel by lazy {
-        ViewModelProvider(this, OverlayViewModelFactory(context, snapHubClient))[OverlayViewModel::class.java]
+        ViewModelProvider(this, OverlayViewModelFactory(context, snapHubClient, getScreenInfo))[OverlayViewModel::class.java]
     }
 
     val snapshotReviewViewModel: SnapshotReviewViewModel by lazy {
-        ViewModelProvider(this, SnapshotReviewViewModelFactory(viewModel, nodeEditViewModel, snapHubClient))[SnapshotReviewViewModel::class.java]
+        ViewModelProvider(this, SnapshotReviewViewModelFactory(viewModel, nodeEditViewModel, snapHubClient, getScreenInfo))[SnapshotReviewViewModel::class.java]
     }
 
     val nodeEditViewModel: NodeEditViewModel by lazy {
@@ -152,7 +155,7 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient)
                         onPrev = { viewModel.prevIssue() },
                         onNext = { viewModel.nextIssue() },
                         onClose = { viewModel.hideReport() },
-                        onClearError = { viewModel.clearError() }
+                        onClearError = { viewModel.hideSuccessOrError() }
                     )
                 } else {
                     mainOverlayView?.visibility = View.GONE
@@ -253,6 +256,51 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient)
         windowManager.addView(nodeEditView, nodeEditParams)
         nodeEditView?.visibility = View.GONE
 
+        // Initialize universal message overlay
+        universalMessageView = ComposeView(context).apply {
+            isFocusable = true
+            isFocusableInTouchMode = true
+            setViewTreeLifecycleOwner(this@OverlayManager)
+            setViewTreeViewModelStoreOwner(this@OverlayManager)
+            setViewTreeSavedStateRegistryOwner(this@OverlayManager)
+            setOnKeyListener { _, keyCode, _ ->
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                    if (onBackPressedDispatcher.hasEnabledCallbacks()) {
+                        onBackPressedDispatcher.onBackPressed()
+                    } else {
+                        viewModel.hideSuccessOrError()
+                    }
+                    true
+                } else {
+                    false
+                }
+            }
+            setContent {
+                CompositionLocalProvider(LocalOnBackPressedDispatcherOwner provides this@OverlayManager) {
+                    val state by viewModel.uiState.collectAsState()
+                    if (state.isUniversalMessageVisible) {
+                        UniversalMessageScreen(
+                            title = state.universalMessageTitle ?: "",
+                            message = state.universalMessageText ?: "",
+                            onDismiss = { viewModel.hideSuccessOrError() }
+                        )
+                    }
+                }
+            }
+        }
+
+        val universalMessageParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, // Allow touches and focus
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+        }
+        windowManager.addView(universalMessageView, universalMessageParams)
+        universalMessageView?.visibility = View.GONE
+
         // Observe ViewModel state to control visibility
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.uiState.collect { state ->
@@ -274,6 +322,13 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient)
                     nodeEditView?.requestFocus()
                 } else {
                     nodeEditView?.visibility = View.GONE
+                }
+
+                if (state.isUniversalMessageVisible) {
+                    universalMessageView?.visibility = View.VISIBLE
+                    universalMessageView?.requestFocus()
+                } else {
+                    universalMessageView?.visibility = View.GONE
                 }
             }
         }

@@ -3,55 +3,44 @@ package com.example.snapcollector
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.draw.alpha
-import androidx.compose.foundation.layout.size
-
-@Composable
-fun LoadingIndicator() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
-}
 
 @Composable
 fun OverlayContent(
@@ -62,37 +51,41 @@ fun OverlayContent(
     onClose: () -> Unit,
     onClearError: () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            onClearError()
-        }
-    }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Transparent
-    ) {
-        Box(modifier = Modifier.padding(it)) {
-            when {
-                state.isLoading -> LoadingIndicator()
-                state.isVisible -> ReportOverlay(state, onPrev, onNext, onClose, it)
+    if (state.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .size(150.dp)
+                    .background(Color.White, RoundedCornerShape(8.dp))
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Загрузка...")
             }
         }
+    } else if (state.isUniversalMessageVisible) {
+        UniversalMessageScreen(
+            title = state.universalMessageTitle ?: "",
+            message = state.universalMessageText ?: "",
+            onDismiss = onClearError
+        )
+    } else if (state.isVisible) {
+        ReportOverlay(state, onPrev, onNext, onClose)
     }
 }
-
-
 
 @Composable
 fun ReportOverlay(
     state: OverlayState,
     onPrev: () -> Unit,
     onNext: () -> Unit,
-    onClose: () -> Unit,
-    paddingValues: PaddingValues
+    onClose: () -> Unit
 ) {
     if (!state.isVisible) return
 
@@ -113,7 +106,6 @@ fun ReportOverlay(
     val systemLeftPaddingPx = with(density) { systemBarsInsets.calculateLeftPadding(layoutDirection).toPx() }
 
     Log.d("OverlayDebug", "issue.rect: ${issue?.rect}")
-    Log.d("OverlayDebug", "paddingValues: $paddingValues")
     Log.d("OverlayDebug", "systemBarsInsets: $systemBarsInsets")
     Log.d("OverlayDebug", "systemTopPaddingPx: $systemTopPaddingPx, systemLeftPaddingPx: $systemLeftPaddingPx")
     Log.d("OverlayDebug", "viewOffset: $viewOffset")

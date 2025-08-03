@@ -41,7 +41,7 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(tag, "The snapcollector has successfully started")
-        overlayManager = OverlayManager(this, snapHubClient)
+        overlayManager = OverlayManager(this, snapHubClient, ::getScreenInfo)
         overlayManager.showOverlay { makeAndSaveSnapshot() }
 
         this.serviceInfo = serviceInfo

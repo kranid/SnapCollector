@@ -1,39 +1,42 @@
 package com.example.snapcollector
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.semantics.text
+import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Button
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 
 
 @Composable
 fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
+    val isVisible by viewModel.isVisible.collectAsState()
+    if (!isVisible) return
+
     val snapNodes by viewModel.snapNodes.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -92,6 +95,8 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                 }
                                 // Set role
                                 node.role.toComposeRole()?.let { this.role = it }
+                                // Set heading
+                                if (node.heading) { this.heading() }
                                 // Set toggleable state for checkboxes and switches
                                 if (node.role == Role.CHECK_BOX || node.role == Role.SWITCH) {
                                     this.toggleableState = if (node.checked) ToggleableState.On else ToggleableState.Off
@@ -131,7 +136,10 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { coroutineScope.launch { viewModel.sendReport() } }, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = { 
+            Log.d("SnapshotReviewScreen", "Send Report button clicked")
+            coroutineScope.launch { viewModel.sendReport() } 
+        }, modifier = Modifier.fillMaxWidth()) {
             Text("Send Report")
         }
     }
