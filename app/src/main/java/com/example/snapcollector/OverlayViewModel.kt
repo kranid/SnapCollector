@@ -41,7 +41,7 @@ class OverlayViewModel(
     val uiState: StateFlow<OverlayState> = _uiState.asStateFlow()
 
     fun startLoading() {
-        _uiState.update { it.copy(isLoading = true, isFabVisible = false, errorMessage = null, successMessage = null, isUniversalMessageVisible = false, universalMessageTitle = null, universalMessageText = null) }
+        _uiState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null, isUniversalMessageVisible = false, universalMessageTitle = null, universalMessageText = null) }
     }
 
     fun stopLoading() {
@@ -50,12 +50,12 @@ class OverlayViewModel(
 
     fun showError(message: String) {
         Log.e("OverlayViewModel", "Showing error: $message")
-        _uiState.update { it.copy(isLoading = false, isFabVisible = true, errorMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Ошибка", universalMessageText = message) }
+        _uiState.update { it.copy(errorMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Ошибка", universalMessageText = message) }
     }
 
     fun showSuccess(message: String) {
         Log.i("OverlayViewModel", "Showing success: $message")
-        _uiState.update { it.copy(isLoading = false, isFabVisible = true, successMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Успех", universalMessageText = message) }
+        _uiState.update { it.copy(successMessage = message, isUniversalMessageVisible = true, universalMessageTitle = "Успех", universalMessageText = message) }
     }
 
     fun hideSuccessOrError() {
@@ -69,13 +69,14 @@ class OverlayViewModel(
     ) {
         Log.d("OverlayViewModel", "runAccessibilityCheck called")
         viewModelScope.launch {
-            startLoading()
+            _uiState.update { it.copy(isFabVisible = false) } // Скрыть FAB сразу
             try {
                 val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
                 val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
 
                 if (snapTree == null) {
                     showError("Failed to get screen data.")
+                    _uiState.update { it.copy(isFabVisible = true) } // Показать FAB при ошибке
                     return@launch
                 }
 
@@ -87,14 +88,17 @@ class OverlayViewModel(
 
                 if (screenshotByteArray == null) {
                     showError("Failed to capture screenshot.")
+                    _uiState.update { it.copy(isFabVisible = true) } // Показать FAB при ошибке
                     return@launch
                 }
 
+                startLoading() // Показать индикатор загрузки после захвата
                 snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray)
-                _uiState.update { it.copy(isSnapshotReviewVisible = true, isFabVisible = false) }
+                _uiState.update { it.copy(isSnapshotReviewVisible = true) }
                 stopLoading()
             } catch (e: Exception) {
                 showError("Ошибка при создании снимка: ${e.message}")
+                _uiState.update { it.copy(isFabVisible = true) } // Показать FAB при ошибке
             }
         }
     }
@@ -110,7 +114,8 @@ class OverlayViewModel(
     fun hideSnapshotReview() {
         _uiState.update {
             it.copy(
-                isSnapshotReviewVisible = false
+                isSnapshotReviewVisible = false,
+                isFabVisible = true // Показать FAB при скрытии SnapshotReviewScreen
             )
         }
     }
@@ -118,7 +123,8 @@ class OverlayViewModel(
     fun hideReport() {
         _uiState.update {
             it.copy(
-                isVisible = false
+                isVisible = false,
+                isFabVisible = true // Показать FAB при скрытии ReportOverlay
             )
         }
     }
