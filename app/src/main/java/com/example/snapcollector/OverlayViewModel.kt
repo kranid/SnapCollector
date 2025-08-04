@@ -71,6 +71,7 @@ class OverlayViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isFabVisible = false) } // Скрыть FAB сразу
             try {
+                val screenInfo = getScreenInfo()
                 val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
                 val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
 
@@ -93,7 +94,7 @@ class OverlayViewModel(
                 }
 
                 startLoading() // Показать индикатор загрузки после захвата
-                snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray)
+                snapshotReviewViewModel.setSnapNodes(snapTree, screenshotByteArray, screenInfo)
                 _uiState.update { it.copy(isSnapshotReviewVisible = true) }
                 stopLoading()
             } catch (e: Exception) {

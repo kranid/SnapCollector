@@ -4,12 +4,13 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.KeyEvent
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 
 data class ScreenInfo(var Name: String, val PackageName: String)
 
 class MyAccessibilityService : AccessibilityService() {
-    
+
 
     private val tag = "snapper"
     private val snapHubClient: SnapHubClient = SnapHubClient()
@@ -43,8 +44,15 @@ class MyAccessibilityService : AccessibilityService() {
         Log.i(tag, "The snapcollector has successfully started")
         overlayManager = OverlayManager(this, snapHubClient, ::getScreenInfo)
         overlayManager.showOverlay { makeAndSaveSnapshot() }
+    }
 
-        this.serviceInfo = serviceInfo
+    override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || event.keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            Log.d(tag, "Volume button pressed")
+            makeAndSaveSnapshot()
+            return true
+        }
+        return super.onKeyEvent(event)
     }
 
     override fun onInterrupt() {
@@ -75,12 +83,15 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    
 
-    private fun getScreenInfo(): ScreenInfo =
-        ScreenInfo(
-            PackageName = rootInActiveWindow.packageName.toString(),
-            Name = "${rootInActiveWindow.packageName}/${rootInActiveWindow.className}"
+    private fun getScreenInfo(): ScreenInfo {
+        val root = rootInActiveWindow
+        val packageName = root?.packageName?.toString() ?: ""
+        val className = root?.className?.toString() ?: ""
+        return ScreenInfo(
+            PackageName = packageName,
+            Name = if (className.isNotEmpty()) "$packageName/$className" else packageName
         )
+    }
 
 }

@@ -12,6 +12,7 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
 
     private val _originalSnapNodes = MutableStateFlow<List<SnapNode>>(emptyList())
     private val _screenshot = MutableStateFlow<ByteArray?>(null)
+    private val _screenInfo = MutableStateFlow<ScreenInfo?>(null)
 
     private val _changes = MutableStateFlow<List<SnapChange>>(emptyList())
     val changes = _changes.asStateFlow()
@@ -19,10 +20,11 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     private val _isVisible = MutableStateFlow(false)
     val isVisible = _isVisible.asStateFlow()
 
-    fun setSnapNodes(nodes: List<SnapNode>, screenshot: ByteArray) {
+    fun setSnapNodes(nodes: List<SnapNode>, screenshot: ByteArray, screenInfo: ScreenInfo) {
         _originalSnapNodes.value = nodes
         _snapNodes.value = nodes
         _screenshot.value = screenshot
+        _screenInfo.value = screenInfo
         _isVisible.value = true
     }
 
@@ -91,16 +93,16 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
             val rect = change.nodeRepresentation?.rect ?: SnapRect()
             when (change.type) {
                 ChangeType.PROPERTY_CHANGE -> {
-                    message = "Property '${change.path}' changed from '${change.oldValue}' to '${change.newValue}'"
+                    message = "Property '{change.path}' changed from '{change.oldValue}' to '{change.newValue}'"
                 }
                 ChangeType.ADD -> {
-                    message = "Element added at path '${change.path}'"
+                    message = "Element added at path '{change.path}'"
                 }
                 ChangeType.REMOVE -> {
-                    message = "Element removed from path '${change.path}'"
+                    message = "Element removed from path '{change.path}'"
                 }
                 ChangeType.REORDER -> {
-                    message = "Element reordered at path '${change.path}' from index ${change.oldIndex} to ${change.newIndex}"
+                    message = "Element reordered at path '{change.path}' from index ${change.oldIndex} to ${change.newIndex}"
                 }
             }
             issues.add(SnapIssue(message, rect))
@@ -111,10 +113,11 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     suspend fun sendReport() {
         Log.d("SnapshotReviewViewModel", "sendReport() called")
         val screenshot = _screenshot.value
+        val screenInfo = _screenInfo.value
         Log.d("SnapshotReviewViewModel", "Screenshot value: ${screenshot?.size ?: "null"}")
 
-        if (screenshot == null) {
-            Log.e("SnapshotReviewViewModel", "Screenshot is null, cannot send report.")
+        if (screenshot == null || screenInfo == null) {
+            Log.e("SnapshotReviewViewModel", "Screenshot or ScreenInfo is null, cannot send report.")
             return
         }
 
@@ -124,15 +127,14 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val humanReadableIssues = generateHumanReadableIssues()
 
         try {
-            val currentScreenInfo = getScreenInfo()
             snapHubClient.saveData(
                 screenshot,
                 originalNodes,
                 editedNodes,
                 technicalChanges,
                 humanReadableIssues,
-                currentScreenInfo.PackageName,
-                currentScreenInfo.Name
+                screenInfo.PackageName,
+                screenInfo.Name
             )
             Log.d("SnapshotReviewViewModel", "saveData successful.")
             overlayViewModel.showSuccess("Отчет успешно отправлен!")

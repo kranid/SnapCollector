@@ -5,4 +5,4 @@
     android:accessibilityFeedbackType="feedbackSpoken"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="true"
-    android:accessibilityFlags="flagDefault"/>
+    android:accessibilityFlags="flagDefault|flagRequestFilterKeyEvents"/>
