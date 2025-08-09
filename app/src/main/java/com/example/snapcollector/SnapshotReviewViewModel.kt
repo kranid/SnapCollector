@@ -14,18 +14,20 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     private val _screenshot = MutableStateFlow<ByteArray?>(null)
     private val _screenInfo = MutableStateFlow<ScreenInfo?>(null)
 
-    private val _changes = MutableStateFlow<List<SnapChange>>(emptyList())
-    val changes = _changes.asStateFlow()
+    private val _changes = MutableStateFlow<MutableList<SnapChange>>(mutableListOf())
+    val changes: List<SnapChange>
+        get() = _changes.value.toList()
 
     private val _isVisible = MutableStateFlow(false)
     val isVisible = _isVisible.asStateFlow()
 
     fun setSnapNodes(nodes: List<SnapNode>, screenshot: ByteArray, screenInfo: ScreenInfo) {
-        _originalSnapNodes.value = nodes
-        _snapNodes.value = nodes
+        _originalSnapNodes.value = nodes.map { it.copy() }
+        _snapNodes.value = nodes.map { it.copy() }
         _screenshot.value = screenshot
         _screenInfo.value = screenInfo
         _isVisible.value = true
+        _changes.value = mutableListOf()
     }
 
     fun hideSnapshotReview() {
@@ -33,13 +35,15 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     }
 
     fun onEditNode(node: SnapNode) {
-        nodeEditViewModel.loadNode(node)
+        val originalNode = _originalSnapNodes.value.find { it == node }!!
+        val originalIndex = _originalSnapNodes.value.indexOf(originalNode)
+        nodeEditViewModel.loadNode(originalNode, originalIndex)
         overlayViewModel.showNodeEditScreen()
     }
 
     fun updateNode(originalNode: SnapNode, updatedNode: SnapNode) {
         val currentNodes = _snapNodes.value.toMutableList()
-        val index = currentNodes.indexOf(originalNode)
+        val index = currentNodes.indexOfFirst { it == originalNode }
         if (index != -1) {
             currentNodes[index] = updatedNode
             _snapNodes.value = currentNodes
@@ -52,7 +56,23 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         if (index != -1) {
             currentNodes.removeAt(index)
             _snapNodes.value = currentNodes
-            _changes.value = _changes.value + SnapChange(ChangeType.REMOVE, "node", null, null, node, index, null)
+
+            val originalIndex = _originalSnapNodes.value.indexOf(node)
+
+            val currentChanges = _changes.value.toMutableList()
+            // Remove any existing changes for this node, as REMOVE takes precedence
+            currentChanges.removeAll { it.oldIndex == originalIndex }
+
+            currentChanges.add(SnapChange(
+                type = ChangeType.REMOVE,
+                propertyName = null,
+                oldValue = null,
+                newValue = null,
+                nodeRepresentation = node,
+                oldIndex = originalIndex,
+                newIndex = null
+            ))
+            _changes.value = currentChanges
         }
     }
 
@@ -60,12 +80,11 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val currentNodes = _snapNodes.value.toMutableList()
         val index = currentNodes.indexOf(node)
         if (index > 0) {
-            val oldIndex = index
             val newIndex = index - 1
             currentNodes.removeAt(index)
             currentNodes.add(newIndex, node)
             _snapNodes.value = currentNodes
-            _changes.value = _changes.value + SnapChange(ChangeType.REORDER, "node", null, null, node, oldIndex, newIndex)
+            updateNodeOrder(node, newIndex)
         }
     }
 
@@ -73,17 +92,73 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val currentNodes = _snapNodes.value.toMutableList()
         val index = currentNodes.indexOf(node)
         if (index < currentNodes.size - 1) {
-            val oldIndex = index
             val newIndex = index + 1
             currentNodes.removeAt(index)
             currentNodes.add(newIndex, node)
             _snapNodes.value = currentNodes
-            _changes.value = _changes.value + SnapChange(ChangeType.REORDER, "node", null, null, node, oldIndex, newIndex)
+            updateNodeOrder(node, newIndex)
         }
     }
 
+    private fun updateNodeOrder(node: SnapNode, newIndex: Int) {
+        val originalIndex = _originalSnapNodes.value.indexOf(node)
+
+        val currentChanges = _changes.value.toMutableList()
+        val existingReorderChange = currentChanges.find { it.oldIndex == originalIndex && it.type == ChangeType.REORDER }
+
+        if (newIndex == originalIndex) {
+            // If the node is moved back to its original position, remove the reorder change
+            existingReorderChange?.let {
+                currentChanges.remove(it)
+            }
+        } else {
+            if (existingReorderChange != null) {
+                // If a reorder change already exists, update its newIndex
+                val updatedChange = existingReorderChange.copy(newIndex = newIndex)
+                val indexInList = currentChanges.indexOf(existingReorderChange)
+                if (indexInList != -1) {
+                    currentChanges[indexInList] = updatedChange
+                }
+            } else {
+                // If no reorder change exists, add a new one
+                currentChanges.add(SnapChange(
+                    type = ChangeType.REORDER,
+                    propertyName = null,
+                    oldValue = null,
+                    newValue = null,
+                    nodeRepresentation = node,
+                    oldIndex = originalIndex,
+                    newIndex = newIndex
+                ))
+            }
+        }
+        _changes.value = currentChanges
+    }
+
     fun addChanges(newChanges: List<SnapChange>) {
-        _changes.value = _changes.value + newChanges
+        val currentChanges = _changes.value.toMutableList()
+
+        newChanges.forEach { newPropChange ->
+            val originalIndex = newPropChange.oldIndex!!
+            val propertyName = newPropChange.propertyName
+
+            val existingPropChange = currentChanges.find {
+                it.type == ChangeType.PROPERTY_CHANGE &&
+                it.oldIndex == originalIndex &&
+                it.propertyName == propertyName
+            }
+
+            if (existingPropChange != null) {
+                val updatedChange = existingPropChange.copy(newValue = newPropChange.newValue)
+                val indexInList = currentChanges.indexOf(existingPropChange)
+                if (indexInList != -1) {
+                    currentChanges[indexInList] = updatedChange
+                }
+            } else {
+                currentChanges.add(newPropChange)
+            }
+        }
+        _changes.value = currentChanges
     }
 
     fun generateHumanReadableIssues(): List<SnapIssue> {
@@ -91,18 +166,22 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         _changes.value.forEach { change ->
             val message: String
             val rect = change.nodeRepresentation?.rect ?: SnapRect()
+            val node = change.nodeRepresentation
+            val nodeDescription = node?.let { "element with index ${change.oldIndex} text '${it.text}' and role '${it.role}'" } ?: "element"
+
             when (change.type) {
                 ChangeType.PROPERTY_CHANGE -> {
-                    message = "Property '{change.path}' changed from '{change.oldValue}' to '{change.newValue}'"
+                    val propertyName = change.propertyName
+                    message = "Element with index ${change.oldIndex} ${nodeDescription} property '$propertyName' must be changed to '${change.newValue}'"
                 }
                 ChangeType.ADD -> {
-                    message = "Element added at path '{change.path}'"
+                    message = "Element with index ${change.newIndex} ${nodeDescription} must be added"
                 }
                 ChangeType.REMOVE -> {
-                    message = "Element removed from path '{change.path}'"
+                    message = "Element with index ${change.oldIndex} ${nodeDescription} must be removed"
                 }
                 ChangeType.REORDER -> {
-                    message = "Element reordered at path '{change.path}' from index ${change.oldIndex} to ${change.newIndex}"
+                    message = "Element with index ${change.oldIndex} ${nodeDescription} must be reordered to ${change.newIndex}"
                 }
             }
             issues.add(SnapIssue(message, rect))
@@ -123,7 +202,7 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
 
         val originalNodes = _originalSnapNodes.value
         val editedNodes = _snapNodes.value
-        val technicalChanges = _changes.value
+        val technicalChanges = changes
         val humanReadableIssues = generateHumanReadableIssues()
 
         try {

@@ -44,7 +44,7 @@ enum class ChangeType {
 @Serializable
 data class SnapChange(
     val type: ChangeType,
-    val path: String,
+    val propertyName: String? = null,
     val oldValue: String? = null,
     val newValue: String? = null,
     val nodeRepresentation: SnapNode? = null,
@@ -52,9 +52,11 @@ data class SnapChange(
     val newIndex: Int? = null
 )
 
+
 @Serializable
 data class SnapNode(
     val text: String = "",
+
     val hint: String = "",
     val role: Role = Role.NONE,
     val actionable: Boolean = false,
