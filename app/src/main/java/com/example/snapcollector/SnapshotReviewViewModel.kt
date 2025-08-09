@@ -173,7 +173,7 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
             val message: String
             val rect = change.nodeRepresentation?.rect ?: SnapRect()
             val node = change.nodeRepresentation
-            val nodeDescription = node?.let { "element with index ${change.oldIndex} text '${it.text}' and role '${it.role}'" } ?: "element"
+            val nodeDescription = node?.let { "with text '${it.text}' and role '${it.role}'" } ?: ""
 
             when (change.type) {
                 ChangeType.PROPERTY_CHANGE -> {
