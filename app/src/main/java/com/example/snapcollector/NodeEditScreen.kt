@@ -18,7 +18,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MenuAnchorType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,8 +73,7 @@ fun NodeEditScreen(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isRoleMenuExpanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(
-                            type = MenuAnchorType.PrimaryNotEditable, enabled = true)
+                        .menuAnchor()
                         .semantics { role = SemanticsRole.DropdownList }
                 )
                 ExposedDropdownMenu(

@@ -17,20 +17,19 @@ class NodeEditViewModel : ViewModel() {
     val changes: List<SnapChange>
         get() = _changes.value.values.toList()
 
-    fun loadNode(node: SnapNode, index: Int) {
-        originalNode = node
+    fun loadNode(nodeToEdit: SnapNode, originalNodeForChanges: SnapNode, index: Int) {
+        this.originalNode = originalNodeForChanges
         originalIndex = index
-        _editableNode.value = node.copy()
+        _editableNode.value = nodeToEdit.copy()
         clearChanges()
     }
 
     fun saveChanges(snapshotReviewViewModel: SnapshotReviewViewModel) {
-        val original = originalNode
         val edited = _editableNode.value
 
-        if (original != null && edited != null) {
+        if (edited != null && originalIndex != null) {
             snapshotReviewViewModel.addChanges(changes)
-            snapshotReviewViewModel.updateNode(original, edited)
+            snapshotReviewViewModel.updateNode(originalIndex!!, edited)
         }
         clearChanges()
     }

@@ -35,16 +35,22 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
     }
 
     fun onEditNode(node: SnapNode) {
-        val originalNode = _originalSnapNodes.value.find { it == node }!!
-        val originalIndex = _originalSnapNodes.value.indexOf(originalNode)
-        nodeEditViewModel.loadNode(originalNode, originalIndex)
+        val currentIndex = _snapNodes.value.indexOf(node)
+        if (currentIndex == -1) {
+            Log.e("SnapshotReviewViewModel", "Node not found in current list")
+            return
+        }
+
+        val originalNode = _originalSnapNodes.value[currentIndex]
+        val nodeToEdit = _snapNodes.value[currentIndex]
+
+        nodeEditViewModel.loadNode(nodeToEdit, originalNode, currentIndex)
         overlayViewModel.showNodeEditScreen()
     }
 
-    fun updateNode(originalNode: SnapNode, updatedNode: SnapNode) {
+    fun updateNode(index: Int, updatedNode: SnapNode) {
         val currentNodes = _snapNodes.value.toMutableList()
-        val index = currentNodes.indexOfFirst { it == originalNode }
-        if (index != -1) {
+        if (index >= 0 && index < currentNodes.size) {
             currentNodes[index] = updatedNode
             _snapNodes.value = currentNodes
         }
