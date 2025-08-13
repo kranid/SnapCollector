@@ -81,6 +81,18 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                             true
                                         })
                                     }
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Объединить с предыдущим") {
+                                            viewModel.mergeWithPrevious(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Объединить со следующим") {
+                                            viewModel.mergeWithNext(node)
+                                            true
+                                        })
+                                    }
                                 }
                             }
                     )
@@ -121,6 +133,18 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                     if (currentIndex < snapNodes.size - 1) {
                                         add(CustomAccessibilityAction("Переместить вниз") {
                                             viewModel.moveNodeDown(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Объединить с предыдущим") {
+                                            viewModel.mergeWithPrevious(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Объединить со следующим") {
+                                            viewModel.mergeWithNext(node)
                                             true
                                         })
                                     }

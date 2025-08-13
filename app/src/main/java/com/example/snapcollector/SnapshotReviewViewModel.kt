@@ -106,6 +106,73 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         }
     }
 
+    fun mergeWithPrevious(node: SnapNode) {
+        val currentNodes = _snapNodes.value.toMutableList()
+        val index = currentNodes.indexOf(node)
+        if (index > 0) {
+            val previousNode = currentNodes[index - 1]
+            val mergedNode = mergeNodes(previousNode, node)
+            currentNodes.removeAt(index)
+            currentNodes.removeAt(index - 1)
+            currentNodes.add(index - 1, mergedNode)
+            _snapNodes.value = currentNodes
+        }
+    }
+
+    fun mergeWithNext(node: SnapNode) {
+        val currentNodes = _snapNodes.value.toMutableList()
+        val index = currentNodes.indexOf(node)
+        if (index < currentNodes.size - 1) {
+            val nextNode = currentNodes[index + 1]
+            val mergedNode = mergeNodes(node, nextNode)
+            currentNodes.removeAt(index + 1)
+            currentNodes.removeAt(index)
+            currentNodes.add(index, mergedNode)
+            _snapNodes.value = currentNodes
+        }
+    }
+
+    private fun mergeNodes(node1: SnapNode, node2: SnapNode): SnapNode {
+        val newRect = if (node1.rect != null && node2.rect != null) {
+            SnapRect(
+                left = minOf(node1.rect.left, node2.rect.left),
+                top = minOf(node1.rect.top, node2.rect.top),
+                right = maxOf(node1.rect.right, node2.rect.right),
+                bottom = maxOf(node1.rect.bottom, node2.rect.bottom)
+            )
+        } else {
+            node1.rect ?: node2.rect
+        }
+
+        val newText = if (node1.text.isNotEmpty()) node1.text else node2.text
+        val newHint = if (node1.hint.isNotEmpty()) node1.hint else node2.hint
+        val newRole = if (node1.role != Role.NONE && node1.role != Role.VIEW_GROUP) node1.role else node2.role
+        val newRoleDescription = if (node1.roleDescription.isNotEmpty()) node1.roleDescription else node2.roleDescription
+        val newStateDescription = if (node1.stateDescription.isNotEmpty()) node1.stateDescription else node2.stateDescription
+        val newActionable = node1.actionable || node2.actionable
+        val newHeading = node1.heading || node2.heading
+        val newChecked = node1.checked || node2.checked
+        val newSelected = node1.selected || node2.selected
+        val newRange = node1.range ?: node2.range
+        val newActions = if (node1.actions.isNotEmpty()) node1.actions else node2.actions
+
+        return SnapNode(
+            text = newText,
+            hint = newHint,
+            role = newRole,
+            roleDescription = newRoleDescription,
+            stateDescription = newStateDescription,
+            actionable = newActionable,
+            heading = newHeading,
+            checked = newChecked,
+            selected = newSelected,
+            rect = newRect,
+            range = newRange,
+            actions = newActions,
+            children = (node1.children + node2.children).toMutableList()
+        )
+    }
+
     private fun updateNodeOrder(node: SnapNode, newIndex: Int) {
         val originalIndex = _originalSnapNodes.value.indexOf(node)
 
