@@ -117,6 +117,11 @@ class NodeEditViewModel : ViewModel() {
         _editableNode.value = _editableNode.value?.copy(selected = isSelected)
     }
 
+    fun updateEnabled(isEnabled: Boolean) {
+        updateProperty("enabled", isEnabled)
+        _editableNode.value = _editableNode.value?.copy(enabled = isEnabled)
+    }
+
     fun updateMin(min: Float) {
         updateProperty("range.min", min)
         _editableNode.value = _editableNode.value?.copy(

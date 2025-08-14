@@ -83,6 +83,7 @@ class SnapController {
             selected = node.isSelected,
             stateDescription = node.stateDescription?.toString() ?: "",
             heading = node.isHeading,
+            enabled = node.isEnabled,
             rect = getRectOfNode(node),
             range = getRange(node),
             actions = AccessibilityNodeInfoUtils.getCustomActions(node)
@@ -113,6 +114,7 @@ class SnapController {
             heading = snap1.heading || snap2.heading,
             checked = snap1.checked || snap2.checked,
             selected = snap1.selected || snap2.selected,
+            enabled =snap1.enabled || snap2.enabled,
             roleDescription = snap1.roleDescription + snap2.roleDescription,
             stateDescription = snap1.stateDescription + snap2.stateDescription,
             rect = snap1.rect,

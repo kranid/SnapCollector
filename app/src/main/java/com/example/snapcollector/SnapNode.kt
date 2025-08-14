@@ -63,6 +63,7 @@ data class SnapNode(
     val heading: Boolean = false,
     val checked: Boolean = false,
     val selected: Boolean = false,
+    val enabled  :Boolean=true,
     val roleDescription: String = "",
     val stateDescription: String = "",
     val rect: SnapRect? = null,

@@ -144,6 +144,11 @@ fun NodeEditScreen(
                     checked = node.selected,
                     onCheckedChange = { newValue -> viewModel.updateSelected(newValue) }
                 )
+                CheckboxWithLabel(
+                    label = "Enabled",
+                    checked = node.enabled,
+                    onCheckedChange = { newValue -> viewModel.updateEnabled(newValue) }
+                )
 
                 // SnapRange fields
                 Spacer(modifier = Modifier.height(16.dp))
