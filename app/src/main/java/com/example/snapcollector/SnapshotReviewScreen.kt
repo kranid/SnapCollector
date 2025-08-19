@@ -53,7 +53,7 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                         value = node.text,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Text") },
+                        label = { Text(node.hint) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)

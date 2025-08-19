@@ -226,6 +226,7 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient,
                     if (onBackPressedDispatcher.hasEnabledCallbacks()) {
                         onBackPressedDispatcher.onBackPressed()
                     } else {
+                        snapshotReviewViewModel.cancelMerge() // Add this line
                         viewModel.hideNodeEditScreen()
                     }
                     true
@@ -238,7 +239,10 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient,
                     NodeEditScreen(
                         viewModel = nodeEditViewModel,
                         snapshotReviewViewModel = snapshotReviewViewModel,
-                        onClose = { viewModel.hideNodeEditScreen() }
+                        onClose = { 
+                            snapshotReviewViewModel.cancelMerge()
+                            viewModel.hideNodeEditScreen() 
+                        }
                     )
                 }
             }

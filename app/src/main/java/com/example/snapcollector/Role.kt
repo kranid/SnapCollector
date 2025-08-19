@@ -126,7 +126,39 @@ enum class Role {
 
 object RoleUtils {
     private const val TALKBACK_EDIT_TEXT_OVERLAY_CLASSNAME = "TalkbackEditTextOverlay"
+    val widgetRoles = setOf(
+        Role.BUTTON,
+        Role.SWITCH,
+        Role.CHECKED_TEXT_VIEW,
+        Role.CHECK_BOX,
+        Role.NUMBER_PICKER,
+        Role.RADIO_BUTTON,
+        Role.SEEK_CONTROL,
+        Role.TOGGLE_BUTTON,
+        Role.IMAGE_BUTTON,
+        Role.EDIT_TEXT,
+        Role.TALKBACK_EDIT_TEXT_OVERLAY,
+        Role.TEXT_ENTRY_KEY
+    )
 
+    val containerRoles = setOf(
+        Role.LIST,
+        Role.DROP_DOWN_LIST,
+        Role.GRID,
+        Role.HORIZONTAL_SCROLL_VIEW,
+        Role.SCROLL_VIEW,
+        Role.TAB_BAR,
+        Role.ALERT_DIALOG,
+        Role.ACTION_BAR_TAB,
+        Role.DATE_PICKER_DIALOG,
+        Role.DATE_PICKER,
+        Role.TIME_PICKER_DIALOG,
+        Role.TIME_PICKER,
+        Role.PAGER,
+        Role.TOAST,
+        Role.SLIDING_DRAWER,
+        Role.DRAWER_LAYOUT,
+    )
     fun getSourceRole(event: AccessibilityEvent?): Role {
         if (event == null) return Role.NONE
         val role = sourceClassNameToRole(event)

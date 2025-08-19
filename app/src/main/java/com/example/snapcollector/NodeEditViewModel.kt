@@ -38,6 +38,29 @@ class NodeEditViewModel : ViewModel() {
         _changes.value = mutableMapOf()
     }
 
+    fun loadMergedNode(mergedNode: SnapNode, originalNodeForChanges: SnapNode, index: Int) {
+        this.originalNode = originalNodeForChanges
+        originalIndex = index
+        _editableNode.value = mergedNode.copy()
+        clearChanges()
+
+        // Register all properties
+        updateText(mergedNode.text)
+        updateHint(mergedNode.hint)
+        updateRole(mergedNode.role)
+        updateActionable(mergedNode.actionable)
+        updateHeading(mergedNode.heading)
+        updateChecked(mergedNode.checked)
+        updateSelected(mergedNode.selected)
+        updateRoleDescription(mergedNode.roleDescription)
+        updateStateDescription(mergedNode.stateDescription)
+        mergedNode.range?.let {
+            updateMin(it.min)
+            updateMax(it.max)
+            updateCurrent(it.current)
+        }
+    }
+
     private fun updateProperty(propertyName: String, newValue: Any?) {
         val node = originalNode ?: return
         val property = node::class.memberProperties.find { it.name == propertyName }
