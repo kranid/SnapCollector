@@ -1,4 +1,3 @@
-
 package com.example.snapcollector
 
 import android.util.Log
@@ -6,7 +5,12 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, private val nodeEditViewModel: NodeEditViewModel, private val snapHubClient: SnapHubClient, private val getScreenInfo: () -> ScreenInfo) : ViewModel() {
+class SnapshotReviewViewModel(
+    private val overlayViewModel: OverlayViewModel,
+    private val nodeEditViewModel: NodeEditViewModel,
+    private val snapHubClient: SnapHubClient,
+    private val getScreenInfo: () -> ScreenInfo
+) : ViewModel() {
     private val _snapNodes = MutableStateFlow<List<SnapNode>>(emptyList())
     val snapNodes = _snapNodes.asStateFlow()
 
@@ -69,15 +73,17 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
             // Remove any existing changes for this node, as REMOVE takes precedence
             currentChanges.removeAll { it.oldIndex == originalIndex }
 
-            currentChanges.add(SnapChange(
-                type = ChangeType.REMOVE,
-                propertyName = null,
-                oldValue = null,
-                newValue = null,
-                nodeRepresentation = node,
-                oldIndex = originalIndex,
-                newIndex = null
-            ))
+            currentChanges.add(
+                SnapChange(
+                    type = ChangeType.REMOVE,
+                    propertyName = null,
+                    oldValue = null,
+                    newValue = null,
+                    nodeRepresentation = node,
+                    oldIndex = originalIndex,
+                    newIndex = null
+                )
+            )
             _changes.value = currentChanges
         }
     }
@@ -110,7 +116,8 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val originalIndex = _originalSnapNodes.value.indexOf(node)
 
         val currentChanges = _changes.value.toMutableList()
-        val existingReorderChange = currentChanges.find { it.oldIndex == originalIndex && it.type == ChangeType.REORDER }
+        val existingReorderChange =
+            currentChanges.find { it.oldIndex == originalIndex && it.type == ChangeType.REORDER }
 
         if (newIndex == originalIndex) {
             // If the node is moved back to its original position, remove the reorder change
@@ -127,15 +134,17 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
                 }
             } else {
                 // If no reorder change exists, add a new one
-                currentChanges.add(SnapChange(
-                    type = ChangeType.REORDER,
-                    propertyName = null,
-                    oldValue = null,
-                    newValue = null,
-                    nodeRepresentation = node,
-                    oldIndex = originalIndex,
-                    newIndex = newIndex
-                ))
+                currentChanges.add(
+                    SnapChange(
+                        type = ChangeType.REORDER,
+                        propertyName = null,
+                        oldValue = null,
+                        newValue = null,
+                        nodeRepresentation = node,
+                        oldIndex = originalIndex,
+                        newIndex = newIndex
+                    )
+                )
             }
         }
         _changes.value = currentChanges
@@ -150,8 +159,8 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
 
             val existingPropChange = currentChanges.find {
                 it.type == ChangeType.PROPERTY_CHANGE &&
-                it.oldIndex == originalIndex &&
-                it.propertyName == propertyName
+                        it.oldIndex == originalIndex &&
+                        it.propertyName == propertyName
             }
 
             if (existingPropChange != null) {
@@ -178,16 +187,23 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
             when (change.type) {
                 ChangeType.PROPERTY_CHANGE -> {
                     val propertyName = change.propertyName
-                    message = "Element with index ${change.oldIndex} ${nodeDescription} property '$propertyName' must be changed to '${change.newValue}'"
+                    message =
+                        "Element with index ${change.oldIndex} ${nodeDescription} property '$propertyName' must be changed to '${change.newValue}'"
                 }
+
                 ChangeType.ADD -> {
-                    message = "Element with index ${change.newIndex} ${nodeDescription} must be added"
+                    message =
+                        "Element with index ${change.newIndex} ${nodeDescription} must be added"
                 }
+
                 ChangeType.REMOVE -> {
-                    message = "Element with index ${change.oldIndex} ${nodeDescription} must be removed"
+                    message =
+                        "Element with index ${change.oldIndex} ${nodeDescription} must be removed"
                 }
+
                 ChangeType.REORDER -> {
-                    message = "Element with index ${change.oldIndex} ${nodeDescription} must be reordered to ${change.newIndex}"
+                    message =
+                        "Element with index ${change.oldIndex} ${nodeDescription} must be reordered to ${change.newIndex}"
                 }
             }
             issues.add(SnapIssue(message, rect))
@@ -202,7 +218,10 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         Log.d("SnapshotReviewViewModel", "Screenshot value: ${screenshot?.size ?: "null"}")
 
         if (screenshot == null || screenInfo == null) {
-            Log.e("SnapshotReviewViewModel", "Screenshot or ScreenInfo is null, cannot send report.")
+            Log.e(
+                "SnapshotReviewViewModel",
+                "Screenshot or ScreenInfo is null, cannot send report."
+            )
             return
         }
 
@@ -210,8 +229,7 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val editedNodes = _snapNodes.value
         val technicalChanges = changes
         val humanReadableIssues = generateHumanReadableIssues()
-        val deviceModel = android.os.Build.MODEL
-
+        val deviceModel = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
         try {
             snapHubClient.saveData(
                 screenshot,
@@ -225,9 +243,9 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
             )
             Log.d("SnapshotReviewViewModel", "saveData successful.")
             overlayViewModel.showSuccess("Отчет успешно отправлен!")
-            } catch (e: Exception) {
-                Log.e("SnapshotReviewViewModel", "Error in saveData: ${e.message}", e)
-                overlayViewModel.showError("Ошибка при отправке отчета: ${e.message}")
-            }
+        } catch (e: Exception) {
+            Log.e("SnapshotReviewViewModel", "Error in saveData: ${e.message}", e)
+            overlayViewModel.showError("Ошибка при отправке отчета: ${e.message}")
         }
     }
+}
