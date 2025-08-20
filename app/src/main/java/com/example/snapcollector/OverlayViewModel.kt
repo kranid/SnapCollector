@@ -65,7 +65,7 @@ class OverlayViewModel(
     fun runAccessibilityCheck(
         makeSnapshot: () -> List<SnapNode>?,
         snapshotReviewViewModel: SnapshotReviewViewModel,
-        takeScreenshot: suspend () -> Bitmap? // Add this parameter
+        takeScreenshot: (suspend () -> Bitmap?)?
     ) {
         Log.d("OverlayViewModel", "runAccessibilityCheck called")
         viewModelScope.launch {
@@ -73,7 +73,10 @@ class OverlayViewModel(
             try {
                 val screenInfo = getScreenInfo()
                 val snapTree = withContext(Dispatchers.IO) { makeSnapshot() }
-                val screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
+                var screenshotBitmap: Bitmap? = null
+                if (takeScreenshot != null) {
+                    screenshotBitmap = withContext(Dispatchers.IO) { takeScreenshot() }
+                }
 
                 if (snapTree == null) {
                     showError("Failed to get screen data.")
@@ -85,12 +88,6 @@ class OverlayViewModel(
                     val outputStream = ByteArrayOutputStream()
                     it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
                     outputStream.toByteArray()
-                }
-
-                if (screenshotByteArray == null) {
-                    showError("Failed to capture screenshot.")
-                    _uiState.update { it.copy(isFabVisible = true) } // Показать FAB при ошибке
-                    return@launch
                 }
 
                 startLoading() // Показать индикатор загрузки после захвата

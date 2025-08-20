@@ -1,9 +1,9 @@
 package com.example.snapcollector
 
 import android.accessibilityservice.AccessibilityService
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.KeyEvent
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 
@@ -61,10 +61,15 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun makeAndSaveSnapshot() {
         Log.d(tag, "makeAndSaveSnapshot called")
+        val takeScreenshotFn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ::takeScreenshotAsBitmap
+        } else {
+            null
+        }
         overlayManager.viewModel.runAccessibilityCheck(
             makeSnapshot = ::makeSnapshot,
             snapshotReviewViewModel = overlayManager.snapshotReviewViewModel,
-            takeScreenshot = ::takeScreenshotAsBitmap
+            takeScreenshot = takeScreenshotFn
         )
     }
 

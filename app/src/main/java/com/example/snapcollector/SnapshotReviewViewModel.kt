@@ -33,7 +33,7 @@ class SnapshotReviewViewModel(
     private val _isVisible = MutableStateFlow(false)
     val isVisible = _isVisible.asStateFlow()
 
-    fun setSnapNodes(nodes: List<SnapNode>, screenshot: ByteArray, screenInfo: ScreenInfo) {
+    fun setSnapNodes(nodes: List<SnapNode>, screenshot: ByteArray?, screenInfo: ScreenInfo) {
         _originalSnapNodes.value = nodes.map { it.copy() }
         _snapNodes.value = nodes.map { it.copy() }
         _screenshot.value = screenshot

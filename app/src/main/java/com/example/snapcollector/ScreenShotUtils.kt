@@ -6,9 +6,11 @@ import android.accessibilityservice.AccessibilityService.ScreenshotResult
 import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
 import android.graphics.Bitmap
 import android.hardware.HardwareBuffer
+import android.os.Build
 import android.util.Base64
 import android.util.Log
 import android.view.Display
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
@@ -16,7 +18,7 @@ import kotlin.coroutines.resume
 /**
  * Делает скриншот основного экрана и возвращает его как base64 PNG строку.
  */
- // API 30
+@RequiresApi(Build.VERSION_CODES.R)
 suspend fun AccessibilityService.takeScreenshotAsBitmap(): Bitmap? = suspendCancellableCoroutine { cont ->
     takeScreenshot(
         Display.DEFAULT_DISPLAY,
