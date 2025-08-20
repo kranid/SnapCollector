@@ -53,7 +53,7 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                         value = node.text,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Text") },
+                        label = { Text(node.hint) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)
@@ -78,6 +78,18 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                     if (currentIndex < snapNodes.size - 1) {
                                         add(CustomAccessibilityAction("Переместить вниз") {
                                             viewModel.moveNodeDown(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Объединить с предыдущим") {
+                                            viewModel.mergeWithPrevious(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Объединить со следующим") {
+                                            viewModel.mergeWithNext(node)
                                             true
                                         })
                                     }
@@ -121,6 +133,18 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                     if (currentIndex < snapNodes.size - 1) {
                                         add(CustomAccessibilityAction("Переместить вниз") {
                                             viewModel.moveNodeDown(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex > 0) {
+                                        add(CustomAccessibilityAction("Объединить с предыдущим") {
+                                            viewModel.mergeWithPrevious(node)
+                                            true
+                                        })
+                                    }
+                                    if (currentIndex < snapNodes.size - 1) {
+                                        add(CustomAccessibilityAction("Объединить со следующим") {
+                                            viewModel.mergeWithNext(node)
                                             true
                                         })
                                     }

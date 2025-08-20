@@ -38,10 +38,51 @@ class NodeEditViewModel : ViewModel() {
         _changes.value = mutableMapOf()
     }
 
+    fun loadMergedNode(mergedNode: SnapNode, originalNodeForChanges: SnapNode, index: Int) {
+        this.originalNode = originalNodeForChanges
+        originalIndex = index
+        _editableNode.value = mergedNode.copy()
+        clearChanges()
+
+        // Register all properties
+        updateText(mergedNode.text)
+        updateHint(mergedNode.hint)
+        updateRole(mergedNode.role)
+        updateActionable(mergedNode.actionable)
+        updateHeading(mergedNode.heading)
+        updateChecked(mergedNode.checked)
+        updateSelected(mergedNode.selected)
+        updateRoleDescription(mergedNode.roleDescription)
+        updateStateDescription(mergedNode.stateDescription)
+        mergedNode.range?.let {
+            updateMin(it.min)
+            updateMax(it.max)
+            updateCurrent(it.current)
+        }
+        mergedNode.rect?.let {
+            updateLeft(it.left)
+            updateTop(it.top)
+            updateRight(it.right)
+            updateBottom(it.bottom)
+        }
+    }
+
+    private fun getNestedProperty(instance: Any?, propertyName: String): Any? {
+        if (instance == null) return null
+        val properties = propertyName.split('.')
+        var current: Any? = instance
+        for (prop in properties) {
+            if (current == null) return null
+            val kClass = current!!::class
+            val member = kClass.memberProperties.find { it.name == prop } ?: return null
+            current = member.call(current)
+        }
+        return current
+    }
+
     private fun updateProperty(propertyName: String, newValue: Any?) {
         val node = originalNode ?: return
-        val property = node::class.memberProperties.find { it.name == propertyName }
-        val oldValue = property?.call(node)
+        val oldValue = getNestedProperty(node, propertyName)
 
         val currentChanges = _changes.value.toMutableMap()
 
@@ -120,6 +161,34 @@ class NodeEditViewModel : ViewModel() {
     fun updateEnabled(isEnabled: Boolean) {
         updateProperty("enabled", isEnabled)
         _editableNode.value = _editableNode.value?.copy(enabled = isEnabled)
+    }
+
+    fun updateLeft(left: Int) {
+        updateProperty("rect.left", left)
+        _editableNode.value = _editableNode.value?.copy(
+            rect = _editableNode.value?.rect?.copy(left = left) ?: SnapRect(left = left)
+        )
+    }
+
+    fun updateTop(top: Int) {
+        updateProperty("rect.top", top)
+        _editableNode.value = _editableNode.value?.copy(
+            rect = _editableNode.value?.rect?.copy(top = top) ?: SnapRect(top = top)
+        )
+    }
+
+    fun updateRight(right: Int) {
+        updateProperty("rect.right", right)
+        _editableNode.value = _editableNode.value?.copy(
+            rect = _editableNode.value?.rect?.copy(right = right) ?: SnapRect(right = right)
+        )
+    }
+
+    fun updateBottom(bottom: Int) {
+        updateProperty("rect.bottom", bottom)
+        _editableNode.value = _editableNode.value?.copy(
+            rect = _editableNode.value?.rect?.copy(bottom = bottom) ?: SnapRect(bottom = bottom)
+        )
     }
 
     fun updateMin(min: Float) {

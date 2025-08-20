@@ -1,42 +1,11 @@
 package com.example.snapcollector
 
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import com.example.snapcollector.RoleUtils.widgetRoles
 
 class SnapController {
 
-    private val widgetRoles = setOf(
-        Role.BUTTON,
-        Role.SWITCH,
-        Role.CHECKED_TEXT_VIEW,
-        Role.CHECK_BOX,
-        Role.NUMBER_PICKER,
-        Role.RADIO_BUTTON,
-        Role.SEEK_CONTROL,
-        Role.TOGGLE_BUTTON,
-        Role.IMAGE_BUTTON,
-        Role.EDIT_TEXT,
-        Role.TALKBACK_EDIT_TEXT_OVERLAY,
-        Role.TEXT_ENTRY_KEY
-    )
 
-    private val containerRoles = setOf(
-        Role.LIST,
-        Role.DROP_DOWN_LIST,
-        Role.GRID,
-        Role.HORIZONTAL_SCROLL_VIEW,
-        Role.SCROLL_VIEW,
-        Role.TAB_BAR,
-        Role.ALERT_DIALOG,
-        Role.ACTION_BAR_TAB,
-        Role.DATE_PICKER_DIALOG,
-        Role.DATE_PICKER,
-        Role.TIME_PICKER_DIALOG,
-        Role.TIME_PICKER,
-        Role.PAGER,
-        Role.TOAST,
-        Role.SLIDING_DRAWER,
-        Role.DRAWER_LAYOUT,
-    )
     private lateinit var rootWindow: AccessibilityNodeInfoCompat
     fun createSnapTree(root: AccessibilityNodeInfoCompat): List<SnapNode>? {
         rootWindow = root

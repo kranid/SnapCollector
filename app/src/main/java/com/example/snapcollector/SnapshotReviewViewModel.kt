@@ -4,6 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.example.snapcollector.RoleUtils.widgetRoles
+
+data class MergeState(
+    val nodeToRemove: SnapNode,
+    val nodeToUpdate: SnapNode, // The original node that was merged into
+    val originalIndexOfUpdate: Int
+)
 
 class SnapshotReviewViewModel(
     private val overlayViewModel: OverlayViewModel,
@@ -11,6 +18,7 @@ class SnapshotReviewViewModel(
     private val snapHubClient: SnapHubClient,
     private val getScreenInfo: () -> ScreenInfo
 ) : ViewModel() {
+    private val _mergeState = MutableStateFlow<MergeState?>(null)
     private val _snapNodes = MutableStateFlow<List<SnapNode>>(emptyList())
     val snapNodes = _snapNodes.asStateFlow()
 
@@ -19,7 +27,7 @@ class SnapshotReviewViewModel(
     private val _screenInfo = MutableStateFlow<ScreenInfo?>(null)
 
     private val _changes = MutableStateFlow<MutableList<SnapChange>>(mutableListOf())
-    val changes: List<SnapChange>
+    private val changes: List<SnapChange>
         get() = _changes.value.toList()
 
     private val _isVisible = MutableStateFlow(false)
@@ -53,11 +61,38 @@ class SnapshotReviewViewModel(
     }
 
     fun updateNode(index: Int, updatedNode: SnapNode) {
+        val mergeState = _mergeState.value
+        if (mergeState != null && mergeState.originalIndexOfUpdate == index) {
+            finalizeMerge(updatedNode)
+        } else {
+            val currentNodes = _snapNodes.value.toMutableList()
+            if (index >= 0 && index < currentNodes.size) {
+                currentNodes[index] = updatedNode
+                _snapNodes.value = currentNodes
+            }
+        }
+    }
+
+    fun finalizeMerge(updatedNode: SnapNode) {
+        val mergeState = _mergeState.value ?: return
+
+        // Update the node that was merged into
         val currentNodes = _snapNodes.value.toMutableList()
-        if (index >= 0 && index < currentNodes.size) {
-            currentNodes[index] = updatedNode
+        val indexToUpdate = currentNodes.indexOf(mergeState.nodeToUpdate)
+        if (indexToUpdate != -1) {
+            currentNodes[indexToUpdate] = updatedNode
             _snapNodes.value = currentNodes
         }
+
+        // Remove the other node
+        removeNode(mergeState.nodeToRemove)
+
+        // Clear the merge state
+        _mergeState.value = null
+    }
+
+    fun cancelMerge() {
+        _mergeState.value = null
     }
 
     fun removeNode(node: SnapNode) {
@@ -110,6 +145,100 @@ class SnapshotReviewViewModel(
             _snapNodes.value = currentNodes
             updateNodeOrder(node, newIndex)
         }
+    }
+
+    fun mergeWithPrevious(node: SnapNode) {
+        val index = _snapNodes.value.indexOf(node)
+        if (index > 0) {
+            val previousNode = _snapNodes.value[index - 1]
+            val mergedNode = mergeNodes(previousNode, node)
+
+            val originalIndexOfPrevious = _originalSnapNodes.value.indexOf(previousNode)
+            val originalPreviousNode =
+                if (originalIndexOfPrevious != -1) _originalSnapNodes.value[originalIndexOfPrevious] else previousNode
+
+            // Set the merge state
+            _mergeState.value = MergeState(
+                nodeToRemove = node,
+                nodeToUpdate = previousNode,
+                originalIndexOfUpdate = originalIndexOfPrevious
+            )
+
+            // Load the editor with the merged node
+            nodeEditViewModel.loadMergedNode(
+                mergedNode,
+                originalPreviousNode,
+                originalIndexOfPrevious
+            )
+            overlayViewModel.showNodeEditScreen()
+        }
+    }
+
+    fun mergeWithNext(node: SnapNode) {
+        val index = _snapNodes.value.indexOf(node)
+        if (index != -1 && index < _snapNodes.value.size - 1) {
+            val nextNode = _snapNodes.value[index + 1]
+            val mergedNode = mergeNodes(node, nextNode)
+
+            val originalIndexOfNode = _originalSnapNodes.value.indexOf(node)
+            val originalNode =
+                if (originalIndexOfNode != -1) _originalSnapNodes.value[originalIndexOfNode] else node
+
+            // Set the merge state
+            _mergeState.value = MergeState(
+                nodeToRemove = nextNode,
+                nodeToUpdate = node,
+                originalIndexOfUpdate = originalIndexOfNode
+            )
+
+            // Load the editor with the merged node
+            nodeEditViewModel.loadMergedNode](mergedNode, originalNode, originalIndexOfNode)
+            overlayViewModel.showNodeEditScreen()
+        }
+    }
+
+    private fun mergeNodes(node1: SnapNode, node2: SnapNode): SnapNode {
+        val newRect = if (node1.rect != null && node2.rect != null) {
+            SnapRect(
+                left = minOf(node1.rect.left, node2.rect.left),
+                top = minOf(node1.rect.top, node2.rect.top),
+                right = maxOf(node1.rect.right, node2.rect.right),
+                bottom = maxOf(node1.rect.bottom, node2.rect.bottom)
+            )
+        } else {
+            node1.rect ?: node2.rect
+        }
+
+        val newText = if (node1.text == node2.text) node1.text else "${node1.text}${node2.text}"
+        val newHint = "${node1.hint}${node2.hint}"
+        val newRole =
+            if (widgetRoles.contains(node2.role) && !widgetRoles.contains(node1.role)) node2.role else node1.role
+        val newRoleDescription =
+            node1.roleDescription.ifEmpty { node2.roleDescription }
+        val newStateDescription =
+            node1.stateDescription.ifEmpty { node2.stateDescription }
+        val newActionable = node1.actionable || node2.actionable
+        val newHeading = node1.heading || node2.heading
+        val newChecked = node1.checked || node2.checked
+        val newSelected = node1.selected || node2.selected
+        val newRange = node1.range ?: node2.range
+        val newActions = node1.actions.ifEmpty { node2.actions }
+
+        return SnapNode(
+            text = newText,
+            hint = newHint,
+            role = newRole,
+            roleDescription = newRoleDescription,
+            stateDescription = newStateDescription,
+            actionable = newActionable,
+            heading = newHeading,
+            checked = newChecked,
+            selected = newSelected,
+            rect = newRect,
+            range = newRange,
+            actions = newActions,
+            children = (node1.children + node2.children).toMutableList()
+        )
     }
 
     private fun updateNodeOrder(node: SnapNode, newIndex: Int) {
@@ -176,7 +305,7 @@ class SnapshotReviewViewModel(
         _changes.value = currentChanges
     }
 
-    fun generateHumanReadableIssues(): List<SnapIssue> {
+    private fun generateHumanReadableIssues(): List<SnapIssue> {
         val issues = mutableListOf<SnapIssue>()
         _changes.value.forEach { change ->
             val message: String
@@ -188,23 +317,24 @@ class SnapshotReviewViewModel(
                 ChangeType.PROPERTY_CHANGE -> {
                     val propertyName = change.propertyName
                     message =
-                        "Element with index ${change.oldIndex} ${nodeDescription} property '$propertyName' must be changed to '${change.newValue}'"
+                        "Element with index ${change.oldIndex} $nodeDescription property '$propertyName' must be changed to '${change.newValue}'"
+
                 }
 
                 ChangeType.ADD -> {
-                    message =
-                        "Element with index ${change.newIndex} ${nodeDescription} must be added"
+                    message="Element with index ${change.newIndex} $nodeDescription must be added"
+
                 }
 
                 ChangeType.REMOVE -> {
                     message =
-                        "Element with index ${change.oldIndex} ${nodeDescription} must be removed"
-                }
+                    "Element with index ${change.oldIndex} $nodeDescription must be removed"
+                                    }
 
                 ChangeType.REORDER -> {
                     message =
-                        "Element with index ${change.oldIndex} ${nodeDescription} must be reordered to ${change.newIndex}"
-                }
+                    "Element with index ${change.oldIndex} $nodeDescription must be reordered to ${change.newIndex}"
+                                    }
             }
             issues.add(SnapIssue(message, rect))
         }
