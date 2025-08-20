@@ -192,7 +192,7 @@ class SnapshotReviewViewModel(
             )
 
             // Load the editor with the merged node
-            nodeEditViewModel.loadMergedNode](mergedNode, originalNode, originalIndexOfNode)
+            nodeEditViewModel.loadMergedNode(mergedNode, originalNode, originalIndexOfNode)
             overlayViewModel.showNodeEditScreen()
         }
     }
