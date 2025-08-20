@@ -210,6 +210,7 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
         val editedNodes = _snapNodes.value
         val technicalChanges = changes
         val humanReadableIssues = generateHumanReadableIssues()
+        val deviceModel = android.os.Build.MODEL
 
         try {
             snapHubClient.saveData(
@@ -219,7 +220,8 @@ class SnapshotReviewViewModel(private val overlayViewModel: OverlayViewModel, pr
                 technicalChanges,
                 humanReadableIssues,
                 screenInfo.PackageName,
-                screenInfo.Name
+                screenInfo.Name,
+                deviceModel
             )
             Log.d("SnapshotReviewViewModel", "saveData successful.")
             overlayViewModel.showSuccess("Отчет успешно отправлен!")

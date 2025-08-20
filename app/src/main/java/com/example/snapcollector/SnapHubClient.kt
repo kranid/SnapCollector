@@ -78,14 +78,15 @@ class SnapHubClient {
         return resp.body<List<SnapNode>>()
     }
 
-    suspend fun saveData(
+        suspend fun saveData(
         screenshot: ByteArray,
         originalSnapNodes: List<SnapNode>,
         editedSnapNodes: List<SnapNode>,
         technicalChanges: List<SnapChange>,
         humanReadableIssues: List<SnapIssue>,
         packageName: String,
-        activityName: String
+        activityName: String,
+        deviceModel: String
     ) = withContext(Dispatchers.IO) {
         Log.d(TAG, "saveData called for package: $packageName, activity: $activityName")
         val url = "$rootUrl/snapshots/add"
@@ -94,6 +95,7 @@ class SnapHubClient {
             setBody(MultiPartFormDataContent(formData {
                 append("package_name", packageName)
                 append("activity_name", activityName)
+                append("device_model", deviceModel)
 
                 append("original_snapshot", Json.encodeToString(originalSnapNodes).toByteArray(), Headers.build {
                     append(HttpHeaders.ContentType, "application/json")
