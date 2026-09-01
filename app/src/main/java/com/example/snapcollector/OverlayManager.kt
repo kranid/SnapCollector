@@ -28,8 +28,12 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.OnBackPressedDispatcherOwner
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.CompositionLocalProvider
-import com.example.snapcollector.OverlayContent
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -119,8 +123,14 @@ class OverlayManager(private val context: Context, snapHubClient: SnapHubClient,
             setContent {
                 val state by viewModel.uiState.collectAsState()
                 if (state.isFabVisible) {
-                    FloatingActionButton(onClick = makeSnapshot) {
-                        Text("Make Snapshot")
+                    FloatingActionButton(onClick = makeSnapshot,
+                        shape = RoundedCornerShape(25),
+                        modifier = Modifier.graphicsLayer {
+                            clip = true
+                            shape = RoundedCornerShape(25)
+                        }
+                        ) {
+                        Text("Make Snapshot",Modifier.padding(horizontal = 8.dp))
                     }
                 }
             }

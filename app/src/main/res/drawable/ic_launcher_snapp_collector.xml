@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background Layer (108x108dp) -->
+    <path
+        android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF1A2A3A"/>
+                <item android:offset="1.0" android:color="#FF0D151E"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Scaled Foreground Elements (Perfectly fits within the 64dp circular safe zone) -->
+
+    <!-- Collector Box / Outer Rounded Frame -->
+    <path
+        android:pathData="M39.6,34h28.8c2.88,0 5.2,2.32 5.2,5.2v28.8c0,2.88 -2.32,5.2 -5.2,5.2H39.6c-2.88,0 -5.2,-2.32 -5.2,-5.2V39.2c0,-2.88 2.32,-5.2 5.2,-5.2z"
+        android:strokeColor="#00F0FF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Shutter / Lens Blades (The 'Snapp' component) -->
+    <!-- Top Blade -->
+    <path
+        android:pathData="M54,40.5 L63.1,45.7 L51.4,52.2 Z"
+        android:fillColor="#00F0FF"
+        android:fillAlpha="0.85"/>
+
+    <!-- Right Blade -->
+    <path
+        android:pathData="M63.1,50.9 L63.1,62.6 L54,56.1 Z"
+        android:fillColor="#00D8FF"
+        android:fillAlpha="0.9"/>
+
+    <!-- Bottom Blade -->
+    <path
+        android:pathData="M54,66.5 L44.9,61.3 L56.6,54.8 Z"
+        android:fillColor="#00C0FF"
+        android:fillAlpha="0.85"/>
+
+    <!-- Left Blade -->
+    <path
+        android:pathData="M44.9,56.1 L44.9,44.4 L54,49.9 Z"
+        android:fillColor="#00A8FF"
+        android:fillAlpha="0.9"/>
+
+    <!-- Central Aperture (Core Focus Point) -->
+    <path
+        android:pathData="M54,50.1m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Collector Grid Accent Dots (Bottom Right) -->
+    <path
+        android:pathData="M64.4,64.4m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"
+        android:fillColor="#00F0FF"/>
+    <path
+        android:pathData="M64.4,60.5m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"
+        android:fillColor="#00F0FF"
+        android:fillAlpha="0.5"/>
+    <path
+        android:pathData="M60.5,64.4m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"
+        android:fillColor="#00F0FF"
+        android:fillAlpha="0.5"/>
+
+</vector>

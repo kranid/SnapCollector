@@ -1,15 +1,20 @@
 package com.example.snapcollector
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +36,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
     val isVisible by viewModel.isVisible.collectAsState()
@@ -41,11 +45,16 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
     val coroutineScope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+
     ) {
+        Spacer(Modifier.height(12.dp))
         LazyColumn(
             modifier = Modifier
                 .weight(1f) // Take up all available space except for the button
+                .padding(12.dp)
         ) {
             items(snapNodes) { node ->
                 if (node.role == Role.EDIT_TEXT) {
@@ -108,7 +117,9 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
                                 // Set role
                                 node.role.toComposeRole()?.let { this.role = it }
                                 // Set heading
-                                if (node.heading) { this.heading() }
+                                if (node.heading) {
+                                    this.heading()
+                                }
                                 // Set toggleable state for checkboxes and switches
                                 if (node.role == Role.CHECK_BOX || node.role == Role.SWITCH) {
                                     this.toggleableState = if (node.checked) ToggleableState.On else ToggleableState.Off
@@ -160,12 +171,19 @@ fun SnapshotReviewScreen(viewModel: SnapshotReviewViewModel) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { 
-            Log.d("SnapshotReviewScreen", "Send Report button clicked")
-            coroutineScope.launch { viewModel.sendReport() } 
-        }, modifier = Modifier.fillMaxWidth()) {
-            Text("Send Report")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Button(
+                onClick = {
+                    Log.d("SnapshotReviewScreen", "Send Report button clicked")
+                    coroutineScope.launch { viewModel.sendReport() }
+                }, modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(horizontal = 12.dp)
+            ) {
+                Text("Send Report")
+            }
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
