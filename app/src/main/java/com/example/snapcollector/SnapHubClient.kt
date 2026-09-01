@@ -25,7 +25,7 @@ import kotlinx.serialization.encodeToString
 
 class SnapHubClient {
     private val TAG: String = "snapcollector"
-    private val rootUrl = "http://212.34.131.52:8080"
+    private val rootUrl = "http://a11ylab.ru"
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json{encodeDefaults =false})
